@@ -8,7 +8,7 @@ const Navbar = () => {
     window.location.href = "/login";
   };
   return (
-    <div className="flex  w-[250px] h-[40px] items-center justify-around rounded-lg text-center">
+    <div className="flex  w-[250px] h-[40px] items-center justify-around rounded-s-full border-gray-400 rounded-e-full rounded- text-center border-2">
       <button className="w-10 h-10 rounded-full flex items-center justify-center bg-transparent text-white transition-transform duration-300 hover:-translate-y-1">
         <svg
           className="text-white w-5 h-5"

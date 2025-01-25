@@ -13,8 +13,8 @@ const Output = ({ editorRef, language }) => {
       setIsLoading(true);
       const response = await executeCode(language, sourceCode); // pass language and sourceCode correctly
       response.stdout
-        ? setOutput(response.stdout.split("\n"))
-        : setOutput(response.stderr.split("\n")); // Output or handle the result
+        ? setOutput(response?.stdout?.split("\n"))
+        : setOutput(response?.stderr?.split("\n")); // Output or handle the result
       response.stderr ? setError(true) : setError(false);
     } catch (error) {
       console.error("Error executing code:", error);

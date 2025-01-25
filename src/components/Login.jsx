@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+import Navbar from "./Navbar.jsx";
 const Login = () => {
   const [formData, setFormData] = useState({
     username: "",
@@ -53,7 +53,8 @@ const Login = () => {
   };
 
   return (
-    <div className="w-full h-screen flex justify-center items-center bg-gray-900 py-10">
+    <div className="w-full h-screen flex  flex-col justify-between items-center gap-10 bg-gray-900 py-10">
+      <Navbar />
       <div className="w-80 bg-gray-800 rounded-lg p-8 text-gray-100">
         <p className="text-center text-2xl font-bold">Login</p>
         <form className="mt-6" onSubmit={handleSubmit}>
