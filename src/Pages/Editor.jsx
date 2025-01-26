@@ -1,129 +1,195 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Editor } from "@monaco-editor/react";
-import LanguageSelector from "../components/LanguageSelector";
-import { LANGUAGE_STARTERS } from "../components/constants";
-import Output from "../components/Output";
-import Navbar from "../components/Navbar";
-import ThemeSelector from "../components/ThemeSelector";
-
-const SideModal = ({ clientFiles, onFileClick }) => {
-  return (
-    <div className="bg-gray-900 text-white h-full w-64 fixed top-0 left-0">
-      <ul className="menu bg-gray-900 text-white min-h-full p-4">
-        <li className="text-lg font-bold pb-4">Client Files</li>
-        {clientFiles.map((file, index) => (
-          <li
-            key={index}
-            className="py-2 px-4 rounded-md hover:bg-gray-700 cursor-pointer"
-            onClick={() => onFileClick(file)}
-          >
-            {file.name}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-};
+import React, { useEffect, useRef, useState } from "react";
+import { FaPlay, FaSpinner } from "react-icons/fa";
+import "../../codemirror/lib/codemirror.js";
+import "../../codemirror/lib/codemirror.css";
+import "../../codemirror/mode/clike/clike.js";
+import "../../codemirror/theme/dracula.css";
+import "../../codemirror/addon/edit/closebrackets.js";
+import axios from "axios";
+import { themeConfig } from "../components/constants.js";
+import { languagesConfig } from "../components/constants.js";
 
 const CodeEditor = () => {
-  const [language, setLanguage] = useState("javascript");
-  const editorRef = useRef();
-  const [value, setValue] = useState("");
-  const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(true);
-  const [theme, setTheme] = useState("vs-dark");
-  const [isLoggedIn, setIsLoggedIn] = useState(true); // Simulating user login status
-  const [clientFiles, setClientFiles] = useState([
-    { name: "file1.js", content: "// JavaScript content here" },
-    { name: "file2.html", content: "<!-- HTML content here -->" },
-    { name: "file3.css", content: "/* CSS content here */" },
-  ]); // Mock client files
+  const editorRef = useRef(null);
+  const editorInstance = useRef(null);
+  const [selectedLanguage, setSelectedLanguage] = useState("");
+  const [code, setCode] = useState("");
+  const [output, setOutput] = useState("");
+  const [input, setInput] = useState("");
+  const [selectedTheme, setSelectedTheme] = useState("dracula");
+  const [loading, setLoading] = useState(false);
 
-  const onMount = (editor) => {
-    editorRef.current = editor;
-    editor.focus();
-    editor.updateOptions({
-      wordWrap: isWordWrapEnabled ? "on" : "off",
-    });
+  const handleLanguageChange = (e) => {
+    const languageKey = e.target.value; // Get the selected language key
+    setSelectedLanguage(languageKey);
+
+    if (editorInstance.current && languagesConfig[languageKey]) {
+      editorInstance.current.setOption(
+        "mode",
+        languagesConfig[languageKey].mode
+      );
+
+      // set the codeSnippet for the selected language
+      setCode(languagesConfig[languageKey].codeSnippet);
+      editorInstance.current.setValue(languagesConfig[languageKey].codeSnippet);
+    }
   };
-
-  const toggleWordWrap = () => {
-    setIsWordWrapEnabled((prevState) => !prevState);
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
   };
+  const handleRunCode = async (e) => {
+    setLoading(true);
+    // Directly fetch the latest code value from the editor instance
+    const currentCode = editorInstance.current.getValue();
 
-  const onSelect = (selectedLanguage) => {
-    setLanguage(selectedLanguage);
-    setValue(LANGUAGE_STARTERS[selectedLanguage]);
-  };
-
-  const onSelectTheme = (selectedTheme) => {
-    setTheme(selectedTheme);
-  };
-
-  const handleFileClick = (file) => {
-    console.log(file);
-    setValue(file.content);
-    // Optionally, set language dynamically based on the file extension
-    const extension = file.name.split(".").pop();
-    const languageMap = {
-      js: "javascript",
-      html: "html",
-      css: "css",
+    // Prepare the data object with the latest code
+    const data = {
+      language: selectedLanguage,
+      version: languagesConfig[selectedLanguage].version,
+      sourceCode: currentCode, // Use the current code value
+      codeInput: input || "",
     };
-    setLanguage(languageMap[extension] || "plaintext");
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/code/execute-code",
+        data
+      );
+
+      if (response.data.stdout === "") {
+        setOutput(response.data.stderr || "Error occurred.");
+      } else {
+        setOutput(response.data.stdout);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false); // Stop loading
+    }
   };
+  const handleThemeChange = (e) => {
+    const theme = e.target.value;
+    setSelectedTheme(theme);
+
+    if (editorInstance.current) {
+      editorInstance.current.setOption("theme", theme); // Apply theme directly
+    }
+  };
+
+  //Default Intilization of langugae
+  useEffect(() => {
+    const defaultLanguage = "cpp"; // Set a default language
+    setSelectedLanguage(defaultLanguage);
+    setCode(languagesConfig[defaultLanguage]?.codeSnippet);
+  }, []);
 
   useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.updateOptions({
-        wordWrap: isWordWrapEnabled ? "on" : "off",
-      });
+    if (!editorInstance.current && editorRef.current) {
+      // Initialize CodeMirror
+      editorInstance.current = CodeMirror.fromTextArea(
+        document.getElementById("editor"),
+        {
+          mode: languagesConfig[selectedLanguage]?.mode || "text/plain",
+          theme: selectedTheme || "default", // Use the selected theme or fallback to default
+          lineNumbers: true,
+          autoCloseBrackets: true,
+        }
+      );
+      editorInstance.current.setSize("100%", "94%");
+    } else if (editorInstance.current) {
+      const languageConfig = languagesConfig[selectedLanguage];
+      if (languageConfig) {
+        editorInstance.current.setOption("mode", languageConfig.mode);
+      }
+      editorInstance.current.setOption("theme", selectedTheme);
+      editorInstance.current.setValue(
+        languagesConfig[selectedLanguage].codeSnippet
+      );
     }
-  }, [isWordWrapEnabled]);
+  }, [selectedLanguage, selectedTheme]);
 
   return (
-    <div className="h-screen w-full bg-gray-900 text-white flex flex-col">
-      {/* Navbar */}
-      <Navbar className="w-full bg-gray-800 text-white p-4" />
+    <div className="bg-black w-full h-screen overflow-hidden">
+      <div className="h-[90%] grid grid-cols-5 gap-2 mt-10 ">
+        {/* sidebar opening section */}
+        <div className="sidebar  w-full h-[100%]  col-span-1 ">
+          <ul className="w-full h-full bg-zinc-200 py-4 px-2 text-left text-lg ">
+            <li className="py-3 px-2 font-bold rounded-lg hover:bg-zinc-400 hover:text-white ">
+              file1.c
+            </li>
+            <li className="py-3 px-2 font-bold rounded-lg hover:bg-zinc-400 hover:text-white ">
+              file2
+            </li>
+            <li className="py-3 px-2 font-bold rounded-lg hover:bg-zinc-400 hover:text-white ">
+              file3
+            </li>
+          </ul>
+        </div>
+        {/* main editor writing section */}
+        <div className="codeeditorarea  h-full w-full col-span-3 p-3">
+          <div className="editor-options  w-full h-[3rem] flex justify-between place-items-start gap-5 ">
+            <span className="flex justify-center items-center gap-3">
+              <select
+                value={selectedLanguage}
+                onChange={handleLanguageChange}
+                id="languageSelector"
+                className="px-3 py-2 bg-zinc-600 text-white rounded-md"
+              >
+                {Object.keys(languagesConfig).map((key) => (
+                  <option value={key} key={key}>
+                    {languagesConfig[key].name}
+                  </option>
+                ))}
+              </select>
 
-      <div className="flex flex-1">
-        {/* Sidebar */}
-        {isLoggedIn && (
-          <SideModal clientFiles={clientFiles} onFileClick={handleFileClick} />
-        )}
+              <select
+                id="themeSelector"
+                onChange={handleThemeChange}
+                value={selectedTheme}
+                className="px-3 py-2 bg-zinc-600 text-white rounded-md"
+              >
+                {Object.keys(themeConfig).map((theme) => (
+                  <option key={theme} value={theme}>
+                    {theme}
+                  </option>
+                ))}
+              </select>
+            </span>
 
-        {/* Main Content */}
-        <div className="flex-1 ml-64 p-4 flex">
-          {/* Editor Section */}
-          <div className="flex-1 flex flex-col pr-4">
-            <div className="flex items-center justify-between pb-4">
-              {/* Editor Controls */}
-              <div className="flex items-center gap-4">
-                <LanguageSelector language={language} onSelect={onSelect} />
-                <button
-                  onClick={toggleWordWrap}
-                  className="bg-gray-800 hover:bg-gray-700 text-white py-1 px-3 rounded-md"
-                >
-                  {isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}
-                </button>
-                <ThemeSelector theme={theme} onSelect={onSelectTheme} />
-              </div>
-            </div>
-
-            {/* Code Editor */}
-            <Editor
-              height="calc(100% - 4rem)"
-              theme={theme}
-              language={language}
-              value={value}
-              onChange={(value) => setValue(value)}
-              onMount={onMount}
-              className="rounded-md border border-gray-700 flex-1"
-            />
+            {/* Run Button */}
+            <button
+              onClick={handleRunCode}
+              disabled={loading} // Disable button while loading
+              className={`${
+                loading ? "bg-gray-600" : "bg-green-800 hover:bg-green-500"
+              } text-white flex justify-center items-center p-3 rounded-lg`}
+            >
+              {loading ? (
+                <FaSpinner className="animate-spin" /> // Spinner while loading
+              ) : (
+                <FaPlay />
+              )}
+            </button>
           </div>
-
-          {/* Output Section */}
-          <div className="flex-1 bg-gray-800 rounded-md p-4 border border-gray-700">
-            <Output editorRef={editorRef} language={language} />
+          <textarea ref={editorRef} id="editor" className=" h-[50%]"></textarea>
+        </div>
+        {/* input output boxes */}
+        <div className="inputoutputarea bg-zinc-800  w-full col-span-1 flex justify-center items-between flex-col gap-2 px-5 py-3">
+          <div className="input-container  w-full h-1/2 p-4">
+            <h2 className="text-white text-xl font-firacode mb-2">Input</h2>
+            <textarea
+              className="input-text-area bg-white w-full h-[90%] rounded-xl p-2 "
+              value={input}
+              onChange={handleInputChange}
+            ></textarea>
+          </div>
+          <div className="output-container  w-full h-1/2 p-4">
+            <h2 className="text-white text-xl font-firacode mb-2">Output</h2>
+            <textarea
+              className="output-text-area bg-white w-full h-[90%] rounded-xl p-2"
+              value={output}
+              readOnly
+            ></textarea>
           </div>
         </div>
       </div>
