@@ -1,13 +1,40 @@
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
+import { auth, db, addDoc, collection } from "../components/firebase";
+import { setDoc, doc, getDoc } from "firebase/firestore";
+
+// Function to create the default welcome.js file for the user
+const createWelcomeFile = async (userId) => {
+  const defaultContent = `function welcome() {\n\tconsole.log("Welcome to CHAP The code editor!");\n}\n\nwelcome();\n`;
+
+  const newFile = {
+    name: "welcome",
+    type: "js",
+    content: defaultContent, // Default content based on language
+  };
+
+  try {
+    const docRef = await addDoc(
+      collection(db, "Users", userId, "files"),
+      newFile
+    );
+    console.log("Document written with ID: ", docRef.id);
+    dispatch(addFile({ ...newFile, id: docRef.id }));
+    closeModal();
+  } catch (e) {
+    console.error("Error adding document: ", e);
+  }
+};
 
 const Signup = () => {
   const [formData, setFormData] = useState({
     username: "",
+    email: "",
     password: "",
-    confirmPassword: "",
   });
 
   const [errors, setErrors] = useState({});
+  const [firebaseError, setFirebaseError] = useState(""); // Define firebaseError state
 
   const validate = () => {
     const newErrors = {};
@@ -17,27 +44,56 @@ const Signup = () => {
       newErrors.username = "Username must be at least 3 characters long.";
     }
 
+    if (!formData.email) {
+      newErrors.email = "Email is required.";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email address is invalid.";
+    }
+
     if (!formData.password) {
       newErrors.password = "Password is required.";
     } else if (formData.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters long.";
     }
 
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password.";
-    } else if (formData.confirmPassword !== formData.password) {
-      newErrors.confirmPassword = "Passwords do not match.";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0; // Returns true if no errors
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validate()) {
-      console.log("Form submitted successfully:", formData);
-      // Handle successful form submission here (e.g., API call)
+    setFirebaseError(""); // Reset Firebase error message
+
+    if (!validate()) {
+      return; // Stop if validation fails
+    }
+
+    try {
+      // Create the user with Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+
+      const user = userCredential.user;
+      alert("User created successfully!");
+
+      if (user) {
+        // Create user document in Firestore
+        await setDoc(doc(db, "Users", user.uid), {
+          email: user.email,
+          username: formData.username, // Save the username from the form
+        });
+
+        // Create the default welcome.js file
+        await createWelcomeFile(user.uid);
+      }
+
+      // Optionally, you can redirect the user or show a success message here
+    } catch (error) {
+      console.error("Firebase Error:", error);
+      setFirebaseError(error.message); // Display Firebase error to the user
     }
   };
 
@@ -70,6 +126,22 @@ const Signup = () => {
               <p className="text-red-500 text-sm">{errors.username}</p>
             )}
           </div>
+          <div className="mb-4">
+            <label htmlFor="email" className="block text-sm text-gray-400 mb-1">
+              Email
+            </label>
+            <input
+              type="text"
+              name="email"
+              id="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border border-gray-600 bg-gray-800 text-gray-100 focus:border-indigo-500 focus:outline-none"
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm">{errors.email}</p>
+            )}
+          </div>
           <div className="mb-6">
             <label
               htmlFor="password"
@@ -89,25 +161,11 @@ const Signup = () => {
               <p className="text-red-500 text-sm">{errors.password}</p>
             )}
           </div>
-          <div className="mb-6">
-            <label
-              htmlFor="confirmPassword"
-              className="block text-sm text-gray-400 mb-1"
-            >
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              name="confirmPassword"
-              id="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg border border-gray-600 bg-gray-800 text-gray-100 focus:border-indigo-500 focus:outline-none"
-            />
-            {errors.confirmPassword && (
-              <p className="text-red-500 text-sm">{errors.confirmPassword}</p>
-            )}
-          </div>
+
+          {firebaseError && (
+            <p className="text-red-500 text-sm text-center">{firebaseError}</p>
+          )}
+
           <button className="w-full bg-indigo-500 py-3 rounded-lg text-gray-900 font-semibold">
             Sign up
           </button>
