@@ -3,8 +3,12 @@ import Navbar from "./Navbar.jsx";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "../Redux/authSlice.js";
 import { useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../components/firebase"; // Ensure you're importing Firebase auth
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+} from "firebase/auth";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -70,11 +74,31 @@ const Login = () => {
     }
   };
 
+  //google login function
+  // const loginWithGoogle = () => {
+  //   signInWithPopup(auth, googleProvider)
+  //     .then((result) => {
+  //       const credential = GoogleAuthProvider.credentialFromResult(result);
+  //       const token = credential.accessToken;
+  //       const user = result.user;
+  //       console.log(user);
+  //       alert("Login successful!");
+  //       const userId = user.uid;
+  //       dispatch(login({ userId }));
+  //       navigate("/editor");
+  //     })
+  //     .catch((error) => {
+  //       const errorCode = error.code;
+  //       const errorMessage = error.message;
+  //       const email = error.customData.email;
+  //       const credential = GoogleAuthProvider.credentialFromError(error);
+  //     });
+  // };
   return (
-    <div className="w-full h-screen flex flex-col justify-between items-center gap-10 bg-gray-900 py-10">
-      <Navbar />
+    <div className="w-full h-screen overflow-hidden flex flex-col justify-around  items-center  py-10 font-helvita">
+      <Navbar className="mt-0" />
       {!authState.isAuthenticated && (
-        <div className="w-80 bg-gray-800 rounded-lg p-8 text-gray-100">
+        <div className="w-80 mt-10  rounded-lg p-8  shadow-xl">
           <p className="text-center text-2xl font-bold">Login</p>
           <form className="mt-6" onSubmit={handleSubmit}>
             <div className="mb-4">
@@ -90,17 +114,14 @@ const Login = () => {
                 id="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-600 bg-gray-800 text-gray-100 focus:border-indigo-500 focus:outline-none"
+                className="w-full px-4 py-3 rounded-lg border border-gray-600   focus:border-indigo-500 focus:outline-none"
               />
               {errors.email && (
                 <p className="text-red-500 text-sm">{errors.email}</p>
               )}
             </div>
             <div className="mb-6">
-              <label
-                htmlFor="password"
-                className="block text-sm text-gray-400 mb-1"
-              >
+              <label htmlFor="password" className="block text-sm  mb-1">
                 Password
               </label>
               <input
@@ -109,23 +130,23 @@ const Login = () => {
                 id="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-600 bg-gray-800 text-gray-100 focus:border-indigo-500 focus:outline-none"
+                className="w-full px-4 py-3 rounded-lg border border-gray-600 focus:border-indigo-500 focus:outline-none"
               />
               {errors.password && (
                 <p className="text-red-500 text-sm">{errors.password}</p>
               )}
-              <div className="flex justify-end mt-2 text-xs text-gray-400">
+              {/* <div className="flex justify-end mt-2 text-xs text-gray-400">
                 <a href="#">Forgot Password?</a>
-              </div>
+              </div> */}
             </div>
             {loginError && (
               <p className="text-red-500 text-sm mb-4">{loginError}</p>
             )}
-            <button className="w-full bg-indigo-500 py-3 rounded-lg text-gray-900 font-semibold">
+            <button className="w-full bg-purple-500 py-3 rounded-lg text-white font-semibold">
               Login
             </button>
           </form>
-          <div className="flex items-center py-4">
+          {/* <div className="flex items-center py-4">
             <div className="flex-1 border-t border-gray-600"></div>
             <p className="px-4 text-sm text-gray-400">Login with Google</p>
             <div className="flex-1 border-t border-gray-600"></div>
@@ -134,6 +155,7 @@ const Login = () => {
             <button
               aria-label="Log in with Google"
               className="p-3 bg-transparent rounded-md hover:bg-gray-700"
+              // onClick={loginWithGoogle}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -143,7 +165,7 @@ const Login = () => {
                 <path d="M16.318 13.714v5.484h9.078c-0.37 2.354-2.745 6.901-9.078 6.901-5.458 0-9.917-4.521-9.917-10.099s4.458-10.099 9.917-10.099c3.109 0 5.193 1.318 6.38 2.464l4.339-4.182c-2.786-2.599-6.396-4.182-10.719-4.182-8.844 0-16 7.151-16 16s7.156 16 16 16c9.234 0 15.365-6.49 15.365-15.635 0-1.052-0.115-1.854-0.255-2.651z" />
               </svg>
             </button>
-          </div>
+          </div> */}
           <p className="text-center text-sm text-gray-400 mt-4">
             Don't have an account?{" "}
             <a href="/signup" className="text-indigo-500 hover:underline">

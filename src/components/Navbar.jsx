@@ -25,31 +25,22 @@ const Navbar = () => {
   };
 
   return (
-    <div className="flex w-[250px] h-[40px] items-center justify-around rounded-s-full border-gray-400 rounded-e-full rounded- text-center border-2">
+    <div className="font-helvita flex w-[250px] h-[40px] items-center justify-around text-center text-lg">
       {/* First button to navigate to home page */}
       <button
-        className="w-10 h-10 rounded-full flex items-center justify-center bg-transparent text-white transition-transform duration-300 hover:-translate-y-1"
+        className="w-10 h-10 rounded-full flex items-center justify-center bg-transparent  transition-transform duration-300 hover:-translate-y-1"
         onClick={handleClick}
       >
-        <svg
-          className="text-white w-5 h-5"
-          stroke="currentColor"
-          fill="currentColor"
-          strokeWidth={0}
-          viewBox="0 0 1024 1024"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path d="M946.5 505L560.1 118.8l-25.9-25.9a31.5 31.5 0 0 0-44.4 0L77.5 505a63.9 63.9 0 0 0-18.8 46c.4 35.2 29.7 63.3 64.9 63.3h42.5V940h691.8V614.3h43.4c17.1 0 33.2-6.7 45.3-18.8a63.6 63.6 0 0 0 18.7-45.3c0-17-6.7-33.1-18.8-45.2zM568 868H456V664h112v204zm217.9-325.7V868H632V640c0-22.1-17.9-40-40-40H432c-22.1 0-40 17.9-40 40v228H238.1V542.3h-96l370-369.7 23.1 23.1L882 542.3h-96.1z" />
-        </svg>
+        Home
       </button>
 
       {/* Second button to navigate to /editor */}
       <button
-        className="w-10 h-10 rounded-full flex items-center justify-center bg-transparent text-white transition-transform duration-300 hover:-translate-y-1"
+        className="w-10 h-10 rounded-full flex items-center justify-center bg-transparent  transition-transform duration-300 hover:-translate-y-1"
         onClick={handleGuestClick}
       >
         <svg
-          className="text-white w-5 h-5"
+          className=" w-5 h-5"
           stroke="currentColor"
           fill="none"
           strokeWidth={2}
@@ -67,11 +58,11 @@ const Navbar = () => {
 
       {/* Third button to navigate to /login  logout */}
       <button
-        className="w-10 h-10 rounded-full flex items-center justify-center bg-transparent text-white transition-transform duration-300 hover:-translate-y-1"
+        className="w-10 h-10 rounded-full flex items-center justify-center bg-transparent  transition-transform duration-300 hover:-translate-y-1"
         onClick={handleLoginLogoutClick}
       >
         <svg
-          className="text-white w-5 h-5"
+          className=" w-5 h-5"
           stroke="currentColor"
           fill="none"
           strokeWidth={2}
@@ -86,9 +77,9 @@ const Navbar = () => {
       </button>
 
       {/* Fourth button with a custom SVG */}
-      {/* <button className="w-10 h-10 rounded-full flex items-center justify-center bg-transparent text-white transition-transform duration-300 hover:-translate-y-1">
+      {/* <button className="w-10 h-10 rounded-full flex items-center justify-center bg-transparent  transition-transform duration-300 hover:-translate-y-1">
         <svg
-          className="text-white w-5 h-5"
+          className=" w-5 h-5"
           stroke="currentColor"
           fill="currentColor"
           strokeWidth={0}

@@ -1,11 +1,18 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
 import React, { useState } from "react";
 import { auth, db, addDoc, collection } from "../components/firebase";
 import { setDoc, doc, getDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { login } from "../Redux/authSlice";
 
 // Function to create the default welcome.js file for the user
-const createWelcomeFile = async (userId) => {
-  const defaultContent = `function welcome() {\n\tconsole.log("Welcome to CHAP The code editor!");\n}\n\nwelcome();\n`;
+const createWelcomeFile = async (userId, dispatch) => {
+  const defaultContent = `function welcome() {\n\tconsole.log("Welcome to CodeCanvas The code editor!");\n}\n\nwelcome();\n`;
 
   const newFile = {
     name: "welcome",
@@ -27,12 +34,14 @@ const createWelcomeFile = async (userId) => {
 };
 
 const Signup = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
   });
-
+  const dispatch = useDispatch();
+  const googleProvider = new GoogleAuthProvider();
   const [errors, setErrors] = useState({});
   const [firebaseError, setFirebaseError] = useState(""); // Define firebaseError state
 
@@ -87,9 +96,9 @@ const Signup = () => {
         });
 
         // Create the default welcome.js file
-        await createWelcomeFile(user.uid);
+        await createWelcomeFile(user.uid, dispatch);
       }
-
+      navigate("/login");
       // Optionally, you can redirect the user or show a success message here
     } catch (error) {
       console.error("Firebase Error:", error);
@@ -102,77 +111,111 @@ const Signup = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      if (user) {
+        const userRef = doc(db, "Users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+          // If user is new, create a user document
+          await setDoc(userRef, {
+            email: user.email,
+            username: user.displayName || "New User",
+          });
+
+          // Create a default welcome.js file
+          await createWelcomeFile(user.uid);
+        }
+
+        // Dispatch login action to Redux
+        dispatch(login({ userId: user.uid, email: user.email }));
+
+        // Navigate to the editor
+        navigate("/editor");
+      }
+    } catch (error) {
+      console.error("Google Login Error:", error);
+      setFirebaseError(error.message);
+    }
+  };
   return (
-    <div className="w-full h-screen flex justify-center items-center bg-gray-900 py-10">
-      <div className="w-80 bg-gray-800 rounded-lg p-8 text-gray-100">
-        <p className="text-center text-2xl font-bold">Sign Up</p>
+    <div className="w-screen h-screen flex justify-center items-center bg-gray-100 font-helvita">
+      <div className="w-96 bg-white rounded-lg p-8 shadow-xl">
+        <p className="text-center text-2xl font-semibold text-gray-900">
+          Sign Up
+        </p>
         <form className="mt-6" onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label
-              htmlFor="username"
-              className="block text-sm text-gray-400 mb-1"
-            >
-              Username
-            </label>
             <input
               type="text"
               name="username"
-              id="username"
+              placeholder="Username"
               value={formData.username}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg border border-gray-600 bg-gray-800 text-gray-100 focus:border-indigo-500 focus:outline-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
             />
             {errors.username && (
-              <p className="text-red-500 text-sm">{errors.username}</p>
+              <p className="text-red-400 text-sm">{errors.username}</p>
             )}
           </div>
           <div className="mb-4">
-            <label htmlFor="email" className="block text-sm text-gray-400 mb-1">
-              Email
-            </label>
             <input
-              type="text"
+              type="email"
               name="email"
-              id="email"
+              placeholder="Email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg border border-gray-600 bg-gray-800 text-gray-100 focus:border-indigo-500 focus:outline-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
             />
             {errors.email && (
-              <p className="text-red-500 text-sm">{errors.email}</p>
+              <p className="text-red-400 text-sm">{errors.email}</p>
             )}
           </div>
           <div className="mb-6">
-            <label
-              htmlFor="password"
-              className="block text-sm text-gray-400 mb-1"
-            >
-              Password
-            </label>
             <input
               type="password"
               name="password"
-              id="password"
+              placeholder="Password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-lg border border-gray-600 bg-gray-800 text-gray-100 focus:border-indigo-500 focus:outline-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
             />
             {errors.password && (
-              <p className="text-red-500 text-sm">{errors.password}</p>
+              <p className="text-red-400 text-sm">{errors.password}</p>
             )}
           </div>
-
           {firebaseError && (
-            <p className="text-red-500 text-sm text-center">{firebaseError}</p>
+            <p className="text-red-400 text-sm text-center">{firebaseError}</p>
           )}
-
-          <button className="w-full bg-indigo-500 py-3 rounded-lg text-gray-900 font-semibold">
+          <button className="w-full bg-purple-600 text-white py-2 rounded font-semibold hover:bg-purple-500 transition">
             Sign up
           </button>
         </form>
-        <p className="text-center text-sm text-gray-400 mt-4">
+        <div className="flex flex-col justify-center items-center mt-4 border-t pt-4">
+          <p> Sign in with Google</p>
+          <button
+            className="p-2 text-gray-800 rounded hover:scale-110 flex items-center"
+            onClick={signInWithGoogle}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 32 32"
+              className="w-6 h-6 mr-2"
+            >
+              <path
+                d="M16.318 13.714v5.484h9.078c-0.37 2.354-2.745 6.901-9.078 6.901-5.458 0-9.917-4.521-9.917-10.099s4.458-10.099 9.917-10.099c3.109 0 5.193 1.318 6.38 2.464l4.339-4.182c-2.786-2.599-6.396-4.182-10.719-4.182-8.844 0-16 7.151-16 16s7.156 16 16 16c9.234 0 15.365-6.49 15.365-15.635 0-1.052-0.115-1.854-0.255-2.651z"
+                fill="black"
+              />
+            </svg>
+          </button>
+        </div>
+        <p className="text-center text-sm mt-4 text-gray-700">
           Already have an account?{" "}
-          <a href="/login" className="text-indigo-500 hover:underline">
+          <a href="/login" className="text-purple-600 hover:underline">
             Sign in
           </a>
         </p>

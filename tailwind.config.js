@@ -7,6 +7,8 @@ export default {
         dynapuff: ["DynaPuff", "cursive"], // For 'DynaPuff'
         firacode: ["Fira Code", "monospace"], // For 'Fira Code'
         ubuntumono: ["Ubuntu Sans Mono", "monospace"], // For 'Ubuntu Sans Mono'
+        helvita: ["helvitaRegular", "sans-serif"],
+        helvitaLight: ["helvitaLight", "sans-serif"],
       },
       animation: {
         open: "open 4s infinite alternate",

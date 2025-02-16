@@ -7,18 +7,17 @@ import "../../codemirror/addon/edit/closebrackets.js";
 import axios from "axios";
 import { themeConfig } from "../components/constants.js";
 import { languagesConfig } from "../components/constants.js";
-import Navbar from "../components/Navbar.jsx";
 import { useDispatch, useSelector } from "react-redux";
 import { setUserFiles } from "../Redux/fileSlice.js";
-import { login } from "../Redux/authSlice.js";
-import { IoMdAdd } from "react-icons/io";
-import { RxCross1 } from "react-icons/rx";
 import { addFile } from "../Redux/fileSlice.js";
 import { db, addDoc, saveCodeToFirestore } from "../components/firebase.js";
 import { doc, collection, getDoc, getDocs } from "firebase/firestore";
 import { LogIn, FilePlus2, Terminal } from "lucide-react";
+import AiAgent from "../components/AiAgent.jsx";
 
 const CodeEditor = () => {
+  const modalRef = useRef(null);
+
   const editorRef = useRef(null);
   const editorInstance = useRef(null);
   const [selectedLanguage, setSelectedLanguage] = useState("");
@@ -40,6 +39,14 @@ const CodeEditor = () => {
   const files = useSelector((state) => state.files?.files || []);
 
   const dispatch = useDispatch();
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [isOpenModal, setIsOpenModal] = useState(false);
+
+  const handleOpenDrawer = () => setIsOpen(true);
+  const handleCloseDrawer = () => setIsOpen(false);
+  const handleOpenModal = () => setIsOpenModal(true);
+  const handleCloseModal = () => setIsOpenModal(false);
 
   const handleCodeChange = useCallback(() => {
     const newCode = editorInstance.current.getValue();
@@ -296,9 +303,23 @@ const CodeEditor = () => {
               {loading ? (
                 <FaSpinner className="animate-spin" /> // Spinner while loading
               ) : (
-                <FaPlay />
+                <>
+                  <FaPlay />
+                  <span>Run</span>
+                </>
               )}
             </button>
+
+            <div>
+              <button
+                onClick={handleOpenDrawer}
+                className="p-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded-md transition-colors"
+              >
+                Open AI Agent
+              </button>
+              <AiAgent isOpen={isOpen} onClose={handleCloseDrawer} />
+              {/* Pass the reference to AiAgent */}
+            </div>
           </div>
         </div>
       </header>
@@ -316,12 +337,14 @@ const CodeEditor = () => {
                 <h2 className="text-zinc-200 font-medium">Files</h2>
                 <button
                   className="p-1 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded-md transition-colors"
-                  onClick={() =>
-                    document.getElementById("my_modal_1").showModal()
+                  onClick={
+                    handleOpenModal
+                    // document.getElementById("my_modal_1").showModal()
                   }
                 >
                   <FilePlus2 color="#ffffff" className="w-4 h-4" />
                 </button>
+                <CreateFile isOpen={isOpenModal} onClose={handleCloseModal} />
               </div>
             </div>
 
@@ -371,17 +394,7 @@ const CodeEditor = () => {
                 />
               </div>
             </div>
-            {/* <div className="inputoutputarea bg-zinc-800  w-full col-span-1 flex justify-center items-between flex-col gap-2 px-5 py-3"> */}
-            {/* <div className="input-container  w-full h-1/2 p-4">
-            <h2 className="text-white text-xl font-firacode mb-2">Input</h2>
-            <textarea
-              className="input-text-area bg-white w-full h-[90%] rounded-xl p-2 "
-              value={input}
-              onChange={handleInputChange}
-            ></textarea>
-          </div> */}
 
-            {/* Output Panel */}
             <div className="output-container flex-1">
               <div className="flex items-center justify-between p-2 border-b border-zinc-800">
                 <div className="flex items-center gap-2 text-zinc-400">
@@ -418,22 +431,18 @@ const CodeEditor = () => {
 
 export default CodeEditor;
 
-export const CreateFile = () => {
+export const CreateFile = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
   const [fileName, setFileName] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const userId = useSelector((state) => state.auth.userId);
-  // Close modal
-  const closeModal = () => {
-    document.getElementById("my_modal_1").close();
-  };
 
   const handleCreateFile = async () => {
     if (fileName.trim() && selectedLanguage) {
       const newFile = {
         name: fileName,
         type: selectedLanguage,
-        content: languagesConfig[selectedLanguage]?.codeSnippet || "", // Default content based on language
+        content: languagesConfig[selectedLanguage]?.codeSnippet || "",
       };
 
       try {
@@ -443,7 +452,7 @@ export const CreateFile = () => {
         console.log("Document written with ID: ", docRef.id);
         dispatch(addFile({ ...newFile, id: docRef.id }));
 
-        closeModal();
+        onClose(); // Close modal after successful creation
       } catch (e) {
         console.error("Error adding document: ", e);
       }
@@ -453,16 +462,15 @@ export const CreateFile = () => {
   };
 
   const handleLanguageChange = (e) => {
-    setSelectedLanguage(e.target.value); // Get the selected language key
+    setSelectedLanguage(e.target.value);
   };
 
   return (
-    <dialog id="my_modal_1" className="modal">
+    <dialog id="my_modal_1" className={`modal ${isOpen ? "modal-open" : ""}`}>
       <div className="modal-box">
         <h3 className="font-bold text-lg">Create a New File</h3>
 
         <div className="py-4">
-          {/* Input for file name */}
           <label
             className="block text-sm font-medium text-gray-700"
             htmlFor="file_name"
@@ -480,7 +488,6 @@ export const CreateFile = () => {
         </div>
 
         <div className="py-4">
-          {/* Dropdown for file type */}
           <label
             className="block text-sm font-medium text-gray-700"
             htmlFor="file_type"
@@ -505,11 +512,9 @@ export const CreateFile = () => {
           <button onClick={handleCreateFile} className="btn btn-primary">
             Create
           </button>
-
-          <form method="dialog">
-            {/* Close button */}
-            <button className="btn">Close</button>
-          </form>
+          <button onClick={onClose} className="btn">
+            Close
+          </button>
         </div>
       </div>
     </dialog>
