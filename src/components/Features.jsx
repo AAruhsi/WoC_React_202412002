@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+
 import {
   FaRocket,
   FaLock,
@@ -11,8 +10,6 @@ import {
   FaTools,
   FaUniversalAccess,
 } from "react-icons/fa";
-
-gsap.registerPlugin(ScrollTrigger);
 
 const featuresData = [
   {
@@ -66,30 +63,6 @@ const featuresData = [
 ];
 
 const Features = () => {
-  const cardsRef = useRef([]);
-
-  useEffect(() => {
-    gsap.fromTo(
-      cardsRef.current,
-      { opacity: 0, y: 50 },
-      {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        duration: 1,
-        stagger: 0.2,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: ".main",
-          start: "top center",
-          end: "bottom center",
-          toggleActions: "play none none none",
-          markers: true,
-        },
-      }
-    );
-  }, [cardsRef.current]);
-
   return (
     <>
       <h1 className="font-helvita text-5xl text-center my-10">Our Features</h1>
@@ -99,8 +72,7 @@ const Features = () => {
           {featuresData.map((feature, index) => (
             <div
               key={index}
-              ref={(el) => (cardsRef.current[index] = el)}
-              className=" p-6 rounded-2xl shadow-xl  break-inside-avoid  hover:bg-gray-50"
+              className="card p-6 rounded-2xl shadow-xl  break-inside-avoid scale-100  hover:bg-gray-50"
               style={{ minHeight: `${200 + (index % 3) * 80}px` }} // Different heights for Masonry
             >
               <div className="text-4xl mb-3">{feature.icon}</div>
