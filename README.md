@@ -119,14 +119,9 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - [Piston API](https://github.com/engineer-man/piston) for code execution.
 
 ---
+https://github.com/user-attachments/assets/214a5ab0-cf30-43f9-90b8-61785b176840
+<video src="https://github.com/user-attachments/assets/214a5ab0-cf30-43f9-90b8-61785b176840" controls width="500"></video>
 
-## Contact
-
-For any questions or feedback, feel free to reach out:
-
-- **Your Name**: [Your Email](mailto:your-email@example.com)
-- **GitHub**: [Your GitHub Profile](https://github.com/your-username)
-- **Project Link**: [Code Canvas Repository](https://github.com/your-username/code-canvas)
 ```
 
 ---
